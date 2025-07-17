@@ -1,4 +1,11 @@
 import json
+import sys
+import os
+
+# Add the project root to the Python path
+# This allows us to import from the 'config' directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from kafka import KafkaConsumer
 from config.database import DatabaseConnection
 
