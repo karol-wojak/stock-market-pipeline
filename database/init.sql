@@ -1,6 +1,6 @@
 -- Create stock prices table
 CREATE TABLE stock_prices (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     symbol VARCHAR(10) NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     open DECIMAL(10,2),
