@@ -17,9 +17,7 @@ class DatabaseConnection:
     def connect(self):
         """Connect to MySQL database"""
         try:
-            print(f"🔗 Attempting connection with: {self.connection_params}")
             self.connection = mysql.connector.connect(**self.connection_params)
-            print("✅ Connected to database")
             return True
         except Error as e:
             print(f"❌ Database connection failed: {e}")
@@ -35,7 +33,7 @@ class DatabaseConnection:
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             
-            cursor.execute(insert_query, (
+            values = (
                 stock_data['symbol'],
                 stock_data['timestamp'],
                 stock_data['open'],
@@ -43,11 +41,11 @@ class DatabaseConnection:
                 stock_data['low'],
                 stock_data['close'],
                 stock_data['volume']
-            ))
+            )
             
+            cursor.execute(insert_query, values)
             self.connection.commit()
             cursor.close()
-            print(f"💾 Saved {stock_data['symbol']} to database")
             return True
             
         except Error as e:
