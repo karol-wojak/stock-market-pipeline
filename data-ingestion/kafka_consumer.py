@@ -15,8 +15,9 @@ class StockKafkaConsumer:
         self.consumer = KafkaConsumer(
             topic,
             bootstrap_servers=kafka_servers,
+            group_id='stock-consumer-fresh',  # New group ID to start fresh
             value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-            auto_offset_reset='earliest'
+            auto_offset_reset='latest'  # Only read NEW messages
         )
         self.db = DatabaseConnection()
     
@@ -26,24 +27,39 @@ class StockKafkaConsumer:
             print("❌ Failed to connect to database. Exiting...")
             return
         
-        print("📡 Listening for stock data messages...")
+        print("✅ Database connected. Listening for messages...")
         print("Press Ctrl+C to stop\n")
+        
+        message_count = 0
         
         try:
             for message in self.consumer:
+                message_count += 1
                 stock_data = message.value
-                print(f"📊 Received: {stock_data}")
+                
+                # Validate data structure
+                required_fields = ['symbol', 'timestamp', 'open', 'high', 'low', 'close', 'volume']
+                missing_fields = [field for field in required_fields if field not in stock_data]
+                if missing_fields:
+                    print(f"❌ Missing fields for {stock_data.get('symbol', 'unknown')}: {missing_fields}")
+                    continue
                 
                 # Save to database
                 if self.db.insert_stock_data(stock_data):
-                    print(f"✅ Stored {stock_data['symbol']} in database")
+                    market_status = "🟢" if stock_data.get('market_hours', False) else "🔴"
+                    print(f"{market_status} Stored {stock_data['symbol']}: ${stock_data['close']:.2f}")
                 else:
-                    print(f"❌ Failed to store {stock_data['symbol']} in database")
+                    print(f"❌ Failed to store {stock_data['symbol']}")
+                    
         except KeyboardInterrupt:
-            print("\n🛑 Stopping consumer...")
+            print(f"\n🛑 Stopping consumer... (Processed {message_count} messages)")
+        except Exception as e:
+            print(f"\n💥 Unexpected error: {e}")
         finally:
+            print("🔒 Closing connections...")
             self.consumer.close()
             self.db.close()
+            print("✅ Cleanup complete")
 
 if __name__ == "__main__":
     consumer = StockKafkaConsumer()
