@@ -41,6 +41,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/var/lib/kafka/data  # Store Kafka logs on your local machine.
 
+  spark:
+    image: apache/spark:latest
+    container_name: spark-master
+    ports:
+      - "8080:8080"  # Spark Web UI
+      - "7077:7077"  # Spark Master
+    volumes:
+      - ./data-processing:/opt/spark/jobs
+      - ./jars:/opt/spark/jars
+    entrypoint: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+
 volumes:
   mysql_data:
   kafka-data:
